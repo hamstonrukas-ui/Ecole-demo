@@ -2,9 +2,8 @@ import { useState, useEffect } from "react";
 import { supabase } from "./supabaseClient";
 
 // Session réelle Supabase Auth + rôle associé (table `utilisateur`).
-// Deux requêtes séparées (utilisateur, puis role) plutôt qu'une jointure
-// imbriquée — plus robuste : évite toute dépendance au cache de relations
-// PostgREST, qui peut échouer silencieusement si la FK n'est pas détectée.
+// Version avec logs de diagnostic temporaires — à retirer une fois le
+// problème de rôle non détecté résolu.
 export function useCurrentUser() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -13,8 +12,17 @@ export function useCurrentUser() {
     let active = true;
 
     async function load() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { if (active) { setUser(null); setLoading(false); } return; }
+      const { data: sessionData, error: errSession } = await supabase.auth.getSession();
+      console.log("[useCurrentUser] session:", sessionData?.session, "erreur session:", errSession);
+
+      const session = sessionData?.session;
+      if (!session) {
+        console.log("[useCurrentUser] Aucune session active — utilisateur non connecté.");
+        if (active) { setUser(null); setLoading(false); }
+        return;
+      }
+
+      console.log("[useCurrentUser] UID de la session connectée :", session.user.id);
 
       const { data: utilisateur, error: errUser } = await supabase
         .from("utilisateur")
@@ -22,11 +30,10 @@ export function useCurrentUser() {
         .eq("id", session.user.id)
         .maybeSingle();
 
-      if (errUser) {
-        console.error("useCurrentUser — erreur lecture utilisateur:", errUser);
-      }
+      console.log("[useCurrentUser] Résultat requête utilisateur:", utilisateur, "erreur:", errUser);
 
       if (!utilisateur) {
+        console.warn("[useCurrentUser] Aucune ligne `utilisateur` trouvée pour cet UID. Vérifie que cet UID existe bien dans la table utilisateur.");
         if (active) { setUser({ id: session.user.id, role: null }); setLoading(false); }
         return;
       }
@@ -38,9 +45,13 @@ export function useCurrentUser() {
           .select("code")
           .eq("id", utilisateur.role_id)
           .maybeSingle();
-        if (errRole) console.error("useCurrentUser — erreur lecture role:", errRole);
+        console.log("[useCurrentUser] Résultat requête role:", role, "erreur:", errRole);
         roleCode = role?.code || null;
+      } else {
+        console.warn("[useCurrentUser] La ligne utilisateur trouvée n'a pas de role_id renseigné.");
       }
+
+      console.log("[useCurrentUser] Rôle final résolu :", roleCode);
 
       if (active) {
         setUser({ id: utilisateur.id, nom: utilisateur.nom_complet, caisseId: utilisateur.caisse_id, role: roleCode });
@@ -54,5 +65,4 @@ export function useCurrentUser() {
   }, []);
 
   return { user, loading };
-        }
-      
+    }
