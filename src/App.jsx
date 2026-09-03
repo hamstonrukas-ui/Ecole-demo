@@ -42,7 +42,7 @@ const DEMO_ROLE_TO_CODE = {
 };
 
 export default function App() {
-  const { user, loading: loadingUser } = useCurrentUser();
+  const { user, loading: loadingUser, debugInfo } = useCurrentUser();
   const [demoRole, setDemoRole] = useState(null); // filet de secours démo — jamais exposé en production
   const [devDemo, setDevDemo] = useState(false);   // n'active RoleSelect qu'en dev local (import.meta.env.DEV)
   const [wantsLogin, setWantsLogin] = useState(false); // "Connexion personnel" cliqué depuis l'espace public
@@ -82,9 +82,14 @@ export default function App() {
   if (user && !roleCode) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6 text-center text-slate-500">
-        <div>
+        <div className="max-w-md w-full">
           <p className="mb-2 font-bold text-slate-700">Compte créé, en attente d'un rôle.</p>
-          <p className="text-sm">Un Administrateur Technique doit vous attribuer un rôle avant de pouvoir continuer.</p>
+          <p className="text-sm mb-6">Un Administrateur Technique doit vous attribuer un rôle avant de pouvoir continuer.</p>
+
+          {/* Diagnostic temporaire, visible sans devtools — à retirer une fois le problème résolu */}
+          <div className="text-left bg-slate-100 border border-slate-200 rounded-xl p-4 text-[11px] font-mono text-slate-600 whitespace-pre-wrap break-all">
+            {JSON.stringify(debugInfo, null, 2)}
+          </div>
         </div>
       </div>
     );
