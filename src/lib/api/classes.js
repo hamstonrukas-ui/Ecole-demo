@@ -84,4 +84,54 @@ export async function fetchAnneeActive() {
   if (error) throw error;
   return data;
 }
-  
+
+export async function createEleve({ matricule, nom, postnom, prenom, sexe, dateNaissance, classeId, anneeScolaireId, responsableNom, responsableTelephone }) {
+  const { data, error } = await supabase
+    .from("eleve")
+    .insert({
+      matricule, nom, postnom: postnom || null, prenom: prenom || null,
+      sexe: sexe || null, date_naissance: dateNaissance || null,
+      classe_id: classeId, annee_scolaire_id: anneeScolaireId,
+      responsable_nom: responsableNom || null, responsable_telephone: responsableTelephone || null,
+      statut: "actif",
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+// Tous les élèves de l'établissement (vue Secrétariat), avec leur classe.
+export async function fetchTousLesEleves() {
+  const { data, error } = await supabase
+    .from("eleve")
+    .select("id, matricule, nom, postnom, prenom, statut, classe:classe_id(nom)")
+    .order("nom");
+  if (error) throw error;
+  return data;
+}
+
+export async function createEleve({ matricule, nom, postnom, prenom, sexe, dateNaissance, classeId, anneeScolaireId, responsableNom, responsableTelephone }) {
+  const { data, error } = await supabase
+    .from("eleve")
+    .insert({
+      matricule, nom, postnom: postnom || null, prenom: prenom || null,
+      sexe: sexe || null, date_naissance: dateNaissance || null,
+      classe_id: classeId, annee_scolaire_id: anneeScolaireId,
+      responsable_nom: responsableNom || null, responsable_telephone: responsableTelephone || null,
+      statut: "actif",
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function fetchTousLesEleves() {
+  const { data, error } = await supabase
+    .from("eleve")
+    .select("id, matricule, nom, postnom, prenom, statut, classe:classe_id(nom)")
+    .order("nom");
+  if (error) throw error;
+  return data;
+}
