@@ -1,101 +1,174 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import BarreNavigation from "./components/BarreNavigation";
-import InstallPrompt from "./components/InstallPrompt";
-import InstallButton from "./components/InstallButton";
-import { CartProvider } from "./context/CartContext";
+import React, { useState } from "react";
+import RoleSelect from "./features/auth/RoleSelect";
+import LoginForm from "./features/auth/LoginForm";
+import PublicHome from "./features/public/PublicHome";
+import PublicClassePage from "./features/public/PublicClassePage";
+import DirecteurHome from "./features/home/DirecteurHome";
+import EnseignantHome from "./features/dashboards/EnseignantHome";
+import SecretaireHome from "./features/dashboards/SecretaireHome";
+import CaissierHome from "./features/dashboards/CaissierHome";
+import ControleurHome from "./features/dashboards/ControleurHome";
+import RespFinancierHome from "./features/dashboards/RespFinancierHome";
+import ComptableHome from "./features/dashboards/ComptableHome";
+import MagasinierHome from "./features/dashboards/MagasinierHome";
+import UserManagement from "./features/admin/UserManagement";
+import ClassesList from "./features/enseignement/ClassesList";
+import ClasseWorkspace from "./features/enseignement/ClasseWorkspace";
+import { useCurrentUser } from "./lib/useCurrentUser";
+import { fetchMesClasses, fetchClasses } from "./lib/api/classes";
+import { supabase } from "./lib/supabaseClient";
 
-// Accueil
-import Accueil from "./pages/Accueil";
+// ============================================================================
+// RACINE DE L'APPLICATION
+//
+// En production : `useCurrentUser()` lit la session Supabase Auth + le rôle
+// réel assigné (table utilisateur/role). RoleSelect ne sert plus qu'à un
+// utilisateur SANS rôle encore assigné (redirige alors vers un message
+// "en attente d'attribution par l'Admin Technique") ou, en développement
+// local sans session, à explorer chaque tableau de bord.
+// ============================================================================
 
-// Boutique
-import CategoriesBoutique from "./pages/Boutique/CategoriesBoutique";
-import ListeBoutiquesCategorie from "./pages/Boutique/ListeBoutiquesCategorie";
-import BoutiqueLayout from "./pages/Boutique/BoutiqueLayout";
-import Catalogue from "./pages/Boutique/Catalogue";
-import Panier from "./pages/Boutique/Panier";
-import Commande from "./pages/Boutique/Commande";
-import Avis from "./pages/Boutique/Avis";
-import Parrainage from "./pages/Boutique/Parrainage";
-import Nouveautes from "./pages/Boutique/Nouveautes";
-import CreerBoutique from "./pages/Boutique/CreerBoutique";
-import GererBoutique from "./pages/Boutique/GererBoutique";
-import DetailProduit from "./pages/Boutique/DetailProduit";
-import RechercheBoutique from "./pages/Boutique/Recherche";
-
-// Location
-import LocationAccueil from "./pages/Location/Accueil";
-import RechercheLocation from "./pages/Location/Recherche";
-import Fiche from "./pages/Location/Fiche";
-import FavorisLocation from "./pages/Location/Favoris";
-import Publier from "./pages/Location/Publier";
-
-// Requête
-import ListeRequetes from "./pages/Requete/ListeRequetes";
-import PublierRequete from "./pages/Requete/PublierRequete";
-import DetailRequete from "./pages/Requete/DetailRequete";
-
-// Auth
-import Connexion from "./pages/Auth/Connexion";
-import Inscription from "./pages/Auth/Inscription";
-import MotDePasseOublie from "./pages/Auth/MotDePasseOublie";
-import ReinitialiserMotDePasse from "./pages/Auth/ReinitialiserMotDePasse";
-
-function AppLayout({ children }) {
-  return (
-    <div className="min-h-screen bg-[#F3F3F3] flex flex-col max-w-6xl mx-auto">
-      <div className="flex-1 pb-20">{children}</div>
-      <BarreNavigation />
-    </div>
-  );
-}
+const HOME_SCREEN_BY_ROLE = {
+  DIRECTEUR: "home", SECRETAIRE: "secretariat", ENSEIGNANT: "mes_classes",
+  CAISSIER: "caisse", CONTROLEUR: "controle", RESP_FINANCIER: "finances",
+  COMPTABLE: "comptabilite", ADMIN_TECH: "utilisateurs", MAGASINIER: "stock",
+};
+// Les écrans démo (RoleSelect) utilisent des clés minuscules historiques —
+// on les fait correspondre aux codes réels de la table `role`.
+const DEMO_ROLE_TO_CODE = {
+  directeur: "DIRECTEUR", secretaire: "SECRETAIRE", enseignant: "ENSEIGNANT",
+  caissier: "CAISSIER", controleur: "CONTROLEUR", resp_financier: "RESP_FINANCIER",
+  comptable: "COMPTABLE", admin_tech: "ADMIN_TECH", magasinier: "MAGASINIER",
+};
 
 export default function App() {
-  return (
-    <BrowserRouter>
-      <CartProvider>
-        <InstallPrompt />
-        <InstallButton />
-        <Routes>
-          {/* Accueil */}
-          <Route path="/" element={<AppLayout><Accueil /></AppLayout>} />
+  const { user, loading: loadingUser, debugInfo } = useCurrentUser();
+  const [demoRole, setDemoRole] = useState(null); // filet de secours démo — jamais exposé en production
+  const [devDemo, setDevDemo] = useState(false);   // n'active RoleSelect qu'en dev local (import.meta.env.DEV)
+  const [wantsLogin, setWantsLogin] = useState(false); // "Connexion personnel" cliqué depuis l'espace public
+  const [publicClasse, setPublicClasse] = useState(null);
+  const [screen, setScreen] = useState(null);
+  const [classes, setClasses] = useState([]);
+  const [activeClassId, setActiveClassId] = useState(null);
 
-          {/* Boutique — découverte par catégorie */}
-          <Route path="/boutique" element={<AppLayout><CategoriesBoutique /></AppLayout>} />
-          <Route path="/boutique/categorie/:categorieId" element={<AppLayout><ListeBoutiquesCategorie /></AppLayout>} />
-          <Route path="/boutique/creer" element={<AppLayout><CreerBoutique /></AppLayout>} />
-          <Route path="/boutique/gerer" element={<AppLayout><GererBoutique /></AppLayout>} />
-          <Route path="/boutique/recherche" element={<AppLayout><RechercheBoutique /></AppLayout>} />
-          <Route path="/boutique/produit/:id" element={<AppLayout><DetailProduit /></AppLayout>} />
+  const roleCode = user?.role || (demoRole ? DEMO_ROLE_TO_CODE[demoRole] : null);
+  const userId = user?.id || "demo-user"; // en session réelle : auth.uid()
 
-          {/* Boutique — mini-site d'une boutique précise */}
-          <Route path="/boutique/:id" element={<AppLayout><BoutiqueLayout /></AppLayout>}>
-            <Route index element={<Catalogue />} />
-            <Route path="panier" element={<Panier />} />
-            <Route path="commande" element={<Commande />} />
-            <Route path="avis" element={<Avis />} />
-            <Route path="parrainage" element={<Parrainage />} />
-            <Route path="nouveautes" element={<Nouveautes />} />
-          </Route>
+  React.useEffect(() => {
+    if (roleCode && !screen) setScreen(HOME_SCREEN_BY_ROLE[roleCode] || "home");
+  }, [roleCode, screen]);
 
-          {/* Location */}
-          <Route path="/location" element={<AppLayout><LocationAccueil /></AppLayout>} />
-          <Route path="/location/recherche" element={<AppLayout><RechercheLocation /></AppLayout>} />
-          <Route path="/location/maison/:id" element={<AppLayout><Fiche /></AppLayout>} />
-          <Route path="/location/favoris" element={<AppLayout><FavorisLocation /></AppLayout>} />
-          <Route path="/location/publier" element={<AppLayout><Publier /></AppLayout>} />
+  React.useEffect(() => {
+    if (screen === "enseignement") {
+      fetchClasses().then(setClasses).catch(() => {});
+    }
+    if (screen === "mes_classes") {
+      fetchMesClasses(userId).then(setClasses).catch(() => setClasses([]));
+    }
+  }, [screen, userId]);
 
-          {/* Requête */}
-          <Route path="/requete" element={<AppLayout><ListeRequetes /></AppLayout>} />
-          <Route path="/requete/publier" element={<AppLayout><PublierRequete /></AppLayout>} />
-          <Route path="/requete/:id" element={<AppLayout><DetailRequete /></AppLayout>} />
+  function openClasse(id) { setActiveClassId(id); setScreen("classe"); }
+  function backToHome() { setScreen(HOME_SCREEN_BY_ROLE[roleCode] || "home"); }
+  async function logout() {
+    await supabase.auth.signOut();
+    setDemoRole(null);
+    setWantsLogin(false);
+    setScreen(null);
+  }
 
-          {/* Auth */}
-          <Route path="/connexion" element={<Connexion />} />
-          <Route path="/inscription" element={<Inscription />} />
-          <Route path="/mot-de-passe-oublie" element={<MotDePasseOublie />} />
-          <Route path="/reinitialiser-mot-de-passe" element={<ReinitialiserMotDePasse />} />
-        </Routes>
-      </CartProvider>
-    </BrowserRouter>
-  );
+  if (loadingUser) return null;
+
+  // Session réelle mais sans rôle encore assigné par l'Admin Technique.
+  if (user && !roleCode) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6 text-center text-slate-500">
+        <div className="max-w-md w-full">
+          <p className="mb-2 font-bold text-slate-700">Compte créé, en attente d'un rôle.</p>
+          <p className="text-sm mb-6">Un Administrateur Technique doit vous attribuer un rôle avant de pouvoir continuer.</p>
+
+          {/* Diagnostic temporaire, visible sans devtools — à retirer une fois le problème résolu */}
+          <div className="text-left bg-slate-100 border border-slate-200 rounded-xl p-4 text-[11px] font-mono text-slate-600 whitespace-pre-wrap break-all">
+            {JSON.stringify(debugInfo, null, 2)}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Point d'entrée par défaut de l'application : l'espace public, sans
+  // connexion. "Connexion personnel" (ou une session déjà active) bascule
+  // vers l'espace personnel ci-dessous.
+  if (!user && !demoRole && !wantsLogin) {
+    if (publicClasse) {
+      return <PublicClassePage classe={publicClasse} onBack={() => setPublicClasse(null)} />;
+    }
+    return <PublicHome onOpenClasse={setPublicClasse} onConnexionPersonnel={() => setWantsLogin(true)} />;
+  }
+
+  if (!user && !demoRole) {
+    // RoleSelect n'est jamais atteignable en production : import.meta.env.DEV
+    // vaut false dans le build déployé, cette branche est donc éliminée du
+    // bundle final. En dev local, un lien discret dans LoginForm l'active.
+    if (import.meta.env.DEV && devDemo) {
+      return <RoleSelect onSelectRole={(r) => setDemoRole(r)} />;
+    }
+    return (
+      <LoginForm
+        onBack={() => setWantsLogin(false)}
+        devMode={import.meta.env.DEV}
+        onOpenDemo={() => setDevDemo(true)}
+      />
+    );
+  }
+
+  const activeClass = classes.find((c) => c.id === activeClassId);
+
+  switch (screen) {
+    case "home":
+      return (
+        <DirecteurHome
+          role={roleCode?.toLowerCase()} onLogout={logout} todayLabel={new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+          classesCount={classes.length}
+          onOpenEnseignement={() => setScreen("enseignement")}
+          onOpenFinance={() => setScreen("finance")}
+          onOpenStock={() => setScreen("stock")}
+        />
+      );
+    case "secretariat":
+      return <SecretaireHome role={roleCode?.toLowerCase()} onLogout={logout} onGererClasses={() => setScreen("enseignement")} />;
+    case "mes_classes":
+      return <EnseignantHome role={roleCode?.toLowerCase()} onLogout={logout} mesClasses={classes} onOpenClasse={openClasse} />;
+    case "caisse":
+      return <CaissierHome role={roleCode?.toLowerCase()} onLogout={logout} tresorerieId={user?.caisseId} userId={userId} />;
+    case "controle":
+      return <ControleurHome role={roleCode?.toLowerCase()} onLogout={logout} userId={userId} />;
+    case "finances":
+      return <RespFinancierHome role={roleCode?.toLowerCase()} onLogout={logout} userId={userId} />;
+    case "comptabilite":
+      return <ComptableHome role={roleCode?.toLowerCase()} onLogout={logout} />;
+    case "stock":
+      return <MagasinierHome role={roleCode?.toLowerCase()} onLogout={logout} onBack={roleCode === "DIRECTEUR" ? backToHome : undefined} userId={userId} />;
+    case "utilisateurs":
+      return <UserManagement role={roleCode?.toLowerCase()} onLogout={logout} />;
+    case "enseignement":
+      return <ClassesList role={roleCode?.toLowerCase()} onLogout={logout} onBack={backToHome} onOpenClasse={openClasse} />;
+    case "classe":
+      if (!activeClass) return null;
+      return (
+        <ClasseWorkspace
+          classe={activeClass} role={roleCode?.toLowerCase()} userId={userId}
+          onBack={() => setScreen(roleCode === "ENSEIGNANT" ? "mes_classes" : "enseignement")}
+          onLogout={logout}
+        />
+      );
+    case "finance":
+      return (
+        <div className="min-h-screen flex items-center justify-center p-6 text-center text-slate-500">
+          Module Finance déjà conçu séparément (schéma SQL + maquettes caisse/tableau de bord) —
+          à monter ici comme son propre ensemble de features/finance/*.
+        </div>
+      );
+    default:
+      return null;
+  }
 }
