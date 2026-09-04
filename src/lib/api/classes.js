@@ -1,4 +1,4 @@
-import { supabase } from "../supabaseClient";
+    import { supabase } from "../supabaseClient";
 
 // Classes de l'année scolaire active. En production, filtrer aussi par
 // classe_matiere_enseignant/classe_enseignant_principal côté ENSEIGNANT —
@@ -72,3 +72,16 @@ export async function searchEleves(query) {
   if (error) throw error;
   return data;
 }
+
+// Année scolaire active — utilisée pour créer une classe sans dépendre
+// d'un champ jamais renseigné ailleurs dans l'app.
+export async function fetchAnneeActive() {
+  const { data, error } = await supabase
+    .from("annee_scolaire")
+    .select("id, libelle")
+    .eq("statut", "active")
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+  
