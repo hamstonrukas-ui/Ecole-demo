@@ -6,6 +6,7 @@ import PublicClassePage from "./features/public/PublicClassePage";
 import DirecteurHome from "./features/home/DirecteurHome";
 import EnseignantHome from "./features/dashboards/EnseignantHome";
 import SecretaireHome from "./features/dashboards/SecretaireHome";
+import ElevesList from "./features/secretariat/ElevesList";
 import CaissierHome from "./features/dashboards/CaissierHome";
 import ControleurHome from "./features/dashboards/ControleurHome";
 import RespFinancierHome from "./features/dashboards/RespFinancierHome";
@@ -13,6 +14,7 @@ import ComptableHome from "./features/dashboards/ComptableHome";
 import MagasinierHome from "./features/dashboards/MagasinierHome";
 import UserManagement from "./features/admin/UserManagement";
 import ClassesList from "./features/enseignement/ClassesList";
+import ElevesList from "./features/secretariat/ElevesList";
 import ClasseWorkspace from "./features/enseignement/ClasseWorkspace";
 import { useCurrentUser } from "./lib/useCurrentUser";
 import { fetchMesClasses, fetchClasses } from "./lib/api/classes";
@@ -135,7 +137,9 @@ export default function App() {
         />
       );
     case "secretariat":
-      return <SecretaireHome role={roleCode?.toLowerCase()} onLogout={logout} onGererClasses={() => setScreen("enseignement")} />;
+      return <SecretaireHome role={roleCode?.toLowerCase()} onLogout={logout} onGererClasses={() => setScreen("enseignement")} onGererEleves={() => setScreen("eleves")} />;
+    case "eleves":
+      return <ElevesList role={roleCode?.toLowerCase()} onLogout={logout} onBack={backToHome} />;
     case "mes_classes":
       return <EnseignantHome role={roleCode?.toLowerCase()} onLogout={logout} mesClasses={classes} onOpenClasse={openClasse} />;
     case "caisse":
@@ -152,6 +156,8 @@ export default function App() {
       return <UserManagement role={roleCode?.toLowerCase()} onLogout={logout} />;
     case "enseignement":
       return <ClassesList role={roleCode?.toLowerCase()} onLogout={logout} onBack={backToHome} onOpenClasse={openClasse} />;
+    case "eleves":
+      return <ElevesList role={roleCode?.toLowerCase()} onLogout={logout} onBack={backToHome} />;
     case "classe":
       if (!activeClass) return null;
       return (
@@ -172,3 +178,4 @@ export default function App() {
       return null;
   }
 }
+  
