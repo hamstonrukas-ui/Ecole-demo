@@ -156,8 +156,6 @@ export default function App() {
       return <UserManagement role={roleCode?.toLowerCase()} onLogout={logout} />;
     case "enseignement":
       return <ClassesList role={roleCode?.toLowerCase()} onLogout={logout} onBack={backToHome} onOpenClasse={openClasse} />;
-    case "eleves":
-      return <ElevesList role={roleCode?.toLowerCase()} onLogout={logout} onBack={backToHome} />;
     case "classe":
       if (!activeClass) return null;
       return (
@@ -177,5 +175,5 @@ export default function App() {
     default:
       return null;
   }
-}
-  
+    }
+      
