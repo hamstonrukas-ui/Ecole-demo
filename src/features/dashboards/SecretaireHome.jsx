@@ -53,4 +53,4 @@ export default function SecretaireHome({ role, onLogout, onGererEleves, onGererC
       </div>
     </div>
   );
-}
+      }
