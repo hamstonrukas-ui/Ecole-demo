@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+      }
+    import React, { useState } from "react";
 import RoleSelect from "./features/auth/RoleSelect";
 import LoginForm from "./features/auth/LoginForm";
 import PublicHome from "./features/public/PublicHome";
@@ -6,9 +7,6 @@ import PublicClassePage from "./features/public/PublicClassePage";
 import DirecteurHome from "./features/home/DirecteurHome";
 import EnseignantHome from "./features/dashboards/EnseignantHome";
 import SecretaireHome from "./features/dashboards/SecretaireHome";
-import ElevesList from "./features/secretariat/ElevesList";
-import CommuniquesList from "./features/secretariat/CommuniquesList";
-import AffectationsEnseignants from "./features/secretariat/AffectationsEnseignants";
 import CaissierHome from "./features/dashboards/CaissierHome";
 import ControleurHome from "./features/dashboards/ControleurHome";
 import RespFinancierHome from "./features/dashboards/RespFinancierHome";
@@ -142,17 +140,9 @@ export default function App() {
         <SecretaireHome
           role={roleCode?.toLowerCase()} onLogout={logout}
           onGererClasses={() => setScreen("enseignement")}
-          onGererEleves={() => setScreen("eleves")}
-          onGererCommuniques={() => setScreen("communiques")}
-          onGererAffectations={() => setScreen("affectations")}
+          userId={userId}
         />
       );
-    case "eleves":
-      return <ElevesList role={roleCode?.toLowerCase()} onLogout={logout} onBack={backToHome} />;
-    case "communiques":
-      return <CommuniquesList role={roleCode?.toLowerCase()} onLogout={logout} onBack={backToHome} userId={userId} />;
-    case "affectations":
-      return <AffectationsEnseignants role={roleCode?.toLowerCase()} onLogout={logout} onBack={backToHome} />;
     case "mes_classes":
       return <EnseignantHome role={roleCode?.toLowerCase()} onLogout={logout} mesClasses={classes} onOpenClasse={openClasse} />;
     case "caisse":
@@ -188,5 +178,5 @@ export default function App() {
     default:
       return null;
   }
-      }
-      
+}
+  
