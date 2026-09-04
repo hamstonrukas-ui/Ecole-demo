@@ -5,7 +5,7 @@ import { supabase } from "../supabaseClient";
 export async function fetchUtilisateurs() {
   const { data, error } = await supabase
     .from("utilisateur")
-    .select("id, nom_complet, statut, role:role_id(code, nom)")
+    .select("id, nom_complet, statut, role:role_id(id, code, nom)")
     .order("nom_complet");
   if (error) throw error;
   return data;
@@ -33,3 +33,4 @@ export async function inviterUtilisateur(email) {
   if (error) throw error;
   return data;
 }
+  
