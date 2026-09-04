@@ -9,8 +9,6 @@ import SecretaireHome from "./features/dashboards/SecretaireHome";
 import ElevesList from "./features/secretariat/ElevesList";
 import CommuniquesList from "./features/secretariat/CommuniquesList";
 import AffectationsEnseignants from "./features/secretariat/AffectationsEnseignants";
-import CommuniquesList from "./features/secretariat/CommuniquesList";
-import AffectationsEnseignants from "./features/secretariat/AffectationsEnseignants";
 import CaissierHome from "./features/dashboards/CaissierHome";
 import ControleurHome from "./features/dashboards/ControleurHome";
 import RespFinancierHome from "./features/dashboards/RespFinancierHome";
@@ -190,4 +188,5 @@ export default function App() {
     default:
       return null;
   }
-}
+      }
+      
