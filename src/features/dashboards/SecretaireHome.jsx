@@ -1,8 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import { Users, School, Megaphone, UserCog, PlusCircle } from "lucide-react";
 import TopBar from "../../components/layout/TopBar";
 import Chip from "../../components/ui/Chip";
 import SectionCard from "../../components/ui/SectionCard";
+import ElevesList from "../secretariat/ElevesList";
+import CommuniquesList from "../secretariat/CommuniquesList";
+import AffectationsEnseignants from "../secretariat/AffectationsEnseignants";
 
 const MOCK = {
   totalEleves: 214,
@@ -11,13 +14,21 @@ const MOCK = {
   affectationsIncompletes: 2,
 };
 
-export default function SecretaireHome({ role, onLogout, onGererEleves, onGererClasses, onGererCommuniques, onGererAffectations }) {
-  // TEST DE DIAGNOSTIC TEMPORAIRE — affiche une alerte au clic pour confirmer
-  // que le bouton réagit, avant d'exécuter la vraie action.
-  function testClic(nom, fn) {
-    alert("Clic détecté sur : " + nom);
-    if (typeof fn === "function") fn();
-    else alert("ERREUR : la fonction " + nom + " n'est pas définie (reçue: " + typeof fn + ")");
+// Chaque action (Élèves, Communiqués, Affectations) est autonome : elle
+// s'ouvre directement depuis ce fichier, sans dépendre du routage central
+// de App.jsx — même mécanisme que "Créer classe" dans ClassesList, qui a
+// toujours fonctionné de façon fiable.
+export default function SecretaireHome({ role, onLogout, onGererClasses, userId }) {
+  const [ecran, setEcran] = useState(null); // null | "eleves" | "communiques" | "affectations"
+
+  if (ecran === "eleves") {
+    return <ElevesList role={role} onLogout={onLogout} onBack={() => setEcran(null)} />;
+  }
+  if (ecran === "communiques") {
+    return <CommuniquesList role={role} onLogout={onLogout} onBack={() => setEcran(null)} userId={userId} />;
+  }
+  if (ecran === "affectations") {
+    return <AffectationsEnseignants role={role} onLogout={onLogout} onBack={() => setEcran(null)} />;
   }
 
   return (
@@ -27,18 +38,18 @@ export default function SecretaireHome({ role, onLogout, onGererEleves, onGererC
         <div className="grid sm:grid-cols-2 gap-4">
           <SectionCard icon={Users} title="Élèves">
             <div className="text-2xl font-black text-slate-800">{MOCK.totalEleves}</div>
-            <button onClick={() => testClic("onGererEleves", onGererEleves)} className="mt-2 flex items-center gap-1 text-xs font-bold text-sky-600 hover:underline"><PlusCircle size={12} /> Inscrire un élève</button>
+            <button onClick={() => setEcran("eleves")} className="mt-2 flex items-center gap-1 text-xs font-bold text-sky-600 hover:underline"><PlusCircle size={12} /> Inscrire un élève</button>
           </SectionCard>
           <SectionCard icon={School} title="Classes">
             <div className="text-2xl font-black text-slate-800">{MOCK.totalClasses}</div>
-            <button onClick={() => testClic("onGererClasses", onGererClasses)} className="mt-2 text-xs font-bold text-sky-600 hover:underline">Gérer les classes →</button>
+            <button onClick={onGererClasses} className="mt-2 text-xs font-bold text-sky-600 hover:underline">Gérer les classes →</button>
           </SectionCard>
         </div>
 
         <SectionCard icon={Megaphone} title="Communiqués">
           <div className="flex items-center justify-between text-sm">
             <span className="text-slate-600">{MOCK.communiquesBrouillon} brouillon en attente de publication</span>
-            <button onClick={() => testClic("onGererCommuniques", onGererCommuniques)} className="text-xs font-bold text-sky-600 hover:underline">Gérer →</button>
+            <button onClick={() => setEcran("communiques")} className="text-xs font-bold text-sky-600 hover:underline">Gérer →</button>
           </div>
         </SectionCard>
 
@@ -51,7 +62,7 @@ export default function SecretaireHome({ role, onLogout, onGererEleves, onGererC
                 <Chip tone="sky">Toutes les classes/matières sont affectées</Chip>
               )}
             </span>
-            <button onClick={() => testClic("onGererAffectations", onGererAffectations)} className="text-xs font-bold text-sky-600 hover:underline">Gérer →</button>
+            <button onClick={() => setEcran("affectations")} className="text-xs font-bold text-sky-600 hover:underline">Gérer →</button>
           </div>
         </SectionCard>
 
@@ -59,5 +70,5 @@ export default function SecretaireHome({ role, onLogout, onGererEleves, onGererC
       </div>
     </div>
   );
-            }
-                                                                                                                                                                    
+                                                                                   }
+          
