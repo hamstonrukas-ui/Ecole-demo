@@ -1,16 +1,17 @@
 import React from "react";
-import { Wallet, ClipboardCheck, FileText, BookOpen } from "lucide-react";
+import { Wallet, ClipboardCheck, FileText, BookOpen, Tag } from "lucide-react";
 import TopBar from "../../components/layout/TopBar";
 
 // Portail Finance pour le Directeur — supervision en lecture des écrans
 // déjà construits pour chaque rôle financier (Caisse, Contrôle, Dépenses,
 // Comptabilité), sans dupliquer ce travail dans un nouvel écran.
-export default function FinanceHub({ role, onLogout, onBack, onOpenCaisse, onOpenControle, onOpenFinances, onOpenComptabilite }) {
+export default function FinanceHub({ role, onLogout, onBack, onOpenCaisse, onOpenControle, onOpenFinances, onOpenComptabilite, onOpenFraisFonds }) {
   const cards = [
     { key: "caisse", label: "Caisse", desc: "Paiements, solde, dernières opérations", icon: Wallet, bg: "bg-sky-500", onClick: onOpenCaisse },
     { key: "controle", label: "Contrôle de caisse", desc: "Recettes à valider, clôtures", icon: ClipboardCheck, bg: "bg-yellow-400", onClick: onOpenControle },
     { key: "finances", label: "Dépenses & fonds", desc: "Solde des fonds, demandes de dépense", icon: FileText, bg: "bg-red-500", onClick: onOpenFinances },
     { key: "comptabilite", label: "Comptabilité", desc: "Écritures, journaux, balance", icon: BookOpen, bg: "bg-slate-700", onClick: onOpenComptabilite },
+    { key: "fraisfonds", label: "Frais & fonds", desc: "Créer les fonds et types de frais de l'école", icon: Tag, bg: "bg-sky-500", onClick: onOpenFraisFonds },
   ];
 
   return (
