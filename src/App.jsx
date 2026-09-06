@@ -10,6 +10,7 @@ import CaissierHome from "./features/dashboards/CaissierHome";
 import ControleurHome from "./features/dashboards/ControleurHome";
 import RespFinancierHome from "./features/dashboards/RespFinancierHome";
 import ComptableHome from "./features/dashboards/ComptableHome";
+import FinanceHub from "./features/finance/FinanceHub";
 import MagasinierHome from "./features/dashboards/MagasinierHome";
 import UserManagement from "./features/admin/UserManagement";
 import ClassesList from "./features/enseignement/ClassesList";
@@ -145,13 +146,13 @@ export default function App() {
     case "mes_classes":
       return <EnseignantHome role={roleCode?.toLowerCase()} onLogout={logout} mesClasses={classes} onOpenClasse={openClasse} />;
     case "caisse":
-      return <CaissierHome role={roleCode?.toLowerCase()} onLogout={logout} tresorerieId={user?.caisseId} userId={userId} />;
+      return <CaissierHome role={roleCode?.toLowerCase()} onLogout={logout} onBack={roleCode === "DIRECTEUR" ? () => setScreen("finance") : undefined} tresorerieId={user?.caisseId} userId={userId} />;
     case "controle":
-      return <ControleurHome role={roleCode?.toLowerCase()} onLogout={logout} userId={userId} />;
+      return <ControleurHome role={roleCode?.toLowerCase()} onLogout={logout} onBack={roleCode === "DIRECTEUR" ? () => setScreen("finance") : undefined} userId={userId} />;
     case "finances":
-      return <RespFinancierHome role={roleCode?.toLowerCase()} onLogout={logout} userId={userId} />;
+      return <RespFinancierHome role={roleCode?.toLowerCase()} onLogout={logout} onBack={roleCode === "DIRECTEUR" ? () => setScreen("finance") : undefined} userId={userId} />;
     case "comptabilite":
-      return <ComptableHome role={roleCode?.toLowerCase()} onLogout={logout} />;
+      return <ComptableHome role={roleCode?.toLowerCase()} onLogout={logout} onBack={roleCode === "DIRECTEUR" ? () => setScreen("finance") : undefined} />;
     case "stock":
       return <MagasinierHome role={roleCode?.toLowerCase()} onLogout={logout} onBack={roleCode === "DIRECTEUR" ? backToHome : undefined} userId={userId} />;
     case "utilisateurs":
@@ -169,14 +170,16 @@ export default function App() {
       );
     case "finance":
       return (
-        <div className="min-h-screen flex items-center justify-center p-6 text-center text-slate-500">
-          Module Finance déjà conçu séparément (schéma SQL + maquettes caisse/tableau de bord) —
-          à monter ici comme son propre ensemble de features/finance/*.
-        </div>
+        <FinanceHub
+          role={roleCode?.toLowerCase()} onLogout={logout} onBack={backToHome}
+          onOpenCaisse={() => setScreen("caisse")}
+          onOpenControle={() => setScreen("controle")}
+          onOpenFinances={() => setScreen("finances")}
+          onOpenComptabilite={() => setScreen("comptabilite")}
+        />
       );
     default:
       return null;
   }
 }
-
-        
+  
