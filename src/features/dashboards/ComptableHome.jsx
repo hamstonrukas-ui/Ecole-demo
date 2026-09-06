@@ -5,7 +5,7 @@ import Chip from "../../components/ui/Chip";
 import SectionCard from "../../components/ui/SectionCard";
 import { fetchEcrituresBrouillon, fetchComptesNonValides, fetchBalanceApercu } from "../../lib/api/finance";
 
-export default function ComptableHome({ role, onLogout, onOuvrirJournal, onGererPlanComptable }) {
+export default function ComptableHome({ role, onLogout, onBack, onOuvrirJournal, onGererPlanComptable }) {
   const [ecritures, setEcritures] = useState([]);
   const [comptes, setComptes] = useState([]);
   const [balance, setBalance] = useState([]);
@@ -23,7 +23,7 @@ export default function ComptableHome({ role, onLogout, onOuvrirJournal, onGerer
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <TopBar role={role} onLogout={onLogout} title="Comptabilité" subtitle="Accueil comptable" />
+      <TopBar role={role} onLogout={onLogout} onBack={onBack} title="Comptabilité" subtitle="Accueil comptable" />
       <div className="max-w-4xl mx-auto p-6 space-y-6">
         {error && <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">{error}</div>}
         {loading ? (
