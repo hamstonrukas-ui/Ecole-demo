@@ -258,3 +258,24 @@ export async function fetchSoldeTheorique(tresorerieId) {
   const sorties = depenses.reduce((s, d) => s + Number(d.montant), 0);
   return entrees - sorties;
 }
+
+export async function createFonds({ code, nom, description }) {
+  const { data, error } = await supabase
+    .from("fonds")
+    .insert({ code, nom, description: description || null })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function createTypeFrais({ code, nom, description, fondsIdDefaut }) {
+  const { data, error } = await supabase
+    .from("type_frais")
+    .insert({ code, nom, description: description || null, fonds_id_defaut: fondsIdDefaut })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+        }
+    
