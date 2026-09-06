@@ -1,18 +1,30 @@
-import React, { useState, useEffect } from "react";
+                    import React, { useState, useEffect } from "react";
 import { Wallet, PlusCircle, Receipt, ArrowRight, Loader2 } from "lucide-react";
 import TopBar from "../../components/layout/TopBar";
 import Chip from "../../components/ui/Chip";
 import SectionCard from "../../components/ui/SectionCard";
-import { fetchDernieresOperations } from "../../lib/api/finance";
+import { fetchDernieresOperations, fetchTresoreries } from "../../lib/api/finance";
 import NouveauPaiementModal from "../finance/modals/NouveauPaiementModal";
 import ClotureCaisseModal from "../finance/modals/ClotureCaisseModal";
 
-export default function CaissierHome({ role, onLogout, tresorerieId, userId }) {
+export default function CaissierHome({ role, onLogout, onBack, tresorerieId: tresorerieIdProp, userId }) {
+  const [tresorerieId, setTresorerieId] = useState(tresorerieIdProp || null);
   const [operations, setOperations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showPaiement, setShowPaiement] = useState(false);
   const [showCloture, setShowCloture] = useState(false);
+
+  // Si aucune caisse n'est directement assignée à l'utilisateur (ex: le
+  // Directeur qui vient consulter en supervision), on affiche par défaut
+  // la première trésorerie existante — en lecture, sans lui assigner quoi
+  // que ce soit en base.
+  useEffect(() => {
+    if (tresorerieIdProp) return;
+    fetchTresoreries()
+      .then((list) => { if (list[0]) setTresorerieId(list[0].id); })
+      .catch((e) => setError(e.message));
+  }, [tresorerieIdProp]);
 
   function reload() {
     if (!tresorerieId) { setLoading(false); return; }
@@ -30,7 +42,7 @@ export default function CaissierHome({ role, onLogout, tresorerieId, userId }) {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <TopBar role={role} onLogout={onLogout} title="Caisse principale" subtitle="Accueil caissier" />
+      <TopBar role={role} onLogout={onLogout} onBack={onBack} title="Caisse principale" subtitle="Accueil caissier" />
       <div className="max-w-4xl mx-auto p-6">
         {!tresorerieId && (
           <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm rounded-xl px-4 py-3 mb-6">
@@ -90,4 +102,5 @@ export default function CaissierHome({ role, onLogout, tresorerieId, userId }) {
       )}
     </div>
   );
-}
+                                                     }
+    
