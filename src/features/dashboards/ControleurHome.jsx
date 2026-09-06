@@ -5,7 +5,7 @@ import Chip from "../../components/ui/Chip";
 import SectionCard from "../../components/ui/SectionCard";
 import { fetchRecettesEnAttente, validerPaiement, rejeterPaiement, fetchCloturesEnAttente, validerCloture } from "../../lib/api/finance";
 
-export default function ControleurHome({ role, onLogout, userId }) {
+export default function ControleurHome({ role, onLogout, onBack, userId }) {
   const [recettes, setRecettes] = useState([]);
   const [clotures, setClotures] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -37,7 +37,7 @@ export default function ControleurHome({ role, onLogout, userId }) {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <TopBar role={role} onLogout={onLogout} title="Contrôle de caisse" subtitle="Accueil contrôleur" />
+      <TopBar role={role} onLogout={onLogout} onBack={onBack} title="Contrôle de caisse" subtitle="Accueil contrôleur" />
       <div className="max-w-4xl mx-auto p-6 space-y-6">
         {error && <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">{error}</div>}
         {loading ? (
@@ -84,4 +84,5 @@ export default function ControleurHome({ role, onLogout, userId }) {
       </div>
     </div>
   );
-}
+            }
+                                                                                                           
