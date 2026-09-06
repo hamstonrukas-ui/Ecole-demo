@@ -16,7 +16,7 @@ const STATUT_LABEL = {
   payee: ["Payée", "sky"],
 };
 
-export default function RespFinancierHome({ role, onLogout, userId }) {
+export default function RespFinancierHome({ role, onLogout, onBack, userId }) {
   const [fonds, setFonds] = useState([]);
   const [demandes, setDemandes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -35,7 +35,7 @@ export default function RespFinancierHome({ role, onLogout, userId }) {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <TopBar role={role} onLogout={onLogout} title="Finances" subtitle="Accueil responsable financier" />
+      <TopBar role={role} onLogout={onLogout} onBack={onBack} title="Finances" subtitle="Accueil responsable financier" />
       <div className="max-w-4xl mx-auto p-6 space-y-6">
         {error && <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">{error}</div>}
 
@@ -95,4 +95,4 @@ export default function RespFinancierHome({ role, onLogout, userId }) {
       )}
     </div>
   );
-}
+                    }
