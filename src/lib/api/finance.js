@@ -277,5 +277,48 @@ export async function createTypeFrais({ code, nom, description, fondsIdDefaut })
     .single();
   if (error) throw error;
   return data;
-        }
-    
+}
+
+// Assignation d'un montant dû à UN élève pour un type de frais donné.
+export async function assignerFraisEleve({ eleveId, typeFraisId, anneeScolaireId, montantDu }) {
+  const { error } = await supabase
+    .from("frais_du")
+    .upsert(
+      { eleve_id: eleveId, type_frais_id: typeFraisId, annee_scolaire_id: anneeScolaireId, montant_du: montantDu },
+      { onConflict: "eleve_id,type_frais_id,annee_scolaire_id" }
+    );
+  if (error) throw error;
+}
+
+// Assignation en masse à toute une classe (cas le plus courant : tous les
+// élèves d'une classe doivent le même montant pour un type de frais).
+// Attribue un montant dû (frais_du) pour un type de frais donné, à tous
+// les élèves d'une classe pour l'année scolaire active. Idempotent :
+// relancer avec un nouveau montant met à jour la dette existante plutôt
+// que d'en créer une seconde (contrainte unique eleve+type_frais+année).
+export async function assignerFraisClasse({ eleveIds, typeFraisId, anneeScolaireId, montant }) {
+  const rows = eleveIds.map((eleveId) => ({
+    eleve_id: eleveId,
+    type_frais_id: typeFraisId,
+    annee_scolaire_id: anneeScolaireId,
+    montant_du: montant,
+  }));
+  const { error } = await supabase
+    .from("frais_du")
+    .upsert(rows, { onConflict: "eleve_id,type_frais_id,annee_scolaire_id" });
+  if (error) throw error;
+}
+
+// Vue d'ensemble : pour un type de frais et une année, combien d'élèves
+// ont déjà un montant attribué, sur combien au total dans la classe.
+export async function fetchFraisDuParClasse(classeId, typeFraisId, anneeScolaireId) {
+  const { data, error } = await supabase
+    .from("frais_du")
+    .select("eleve_id, montant_du, eleve:eleve_id!inner(classe_id)")
+    .eq("type_frais_id", typeFraisId)
+    .eq("annee_scolaire_id", anneeScolaireId)
+    .eq("eleve.classe_id", classeId);
+  if (error) throw error;
+  return data;
+             }
+        
