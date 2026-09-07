@@ -207,7 +207,7 @@ export async function fetchBalanceApercu(limit = 5) {
 export async function fetchTypesFrais() {
   const { data, error } = await supabase
     .from("type_frais")
-    .select("id, nom, fonds_id_defaut")
+    .select("id, nom, fonds_id_defaut, montant_defaut, date_limite_paiement")
     .eq("statut", "actif")
     .order("nom");
   if (error) throw error;
@@ -269,10 +269,13 @@ export async function createFonds({ code, nom, description }) {
   return data;
 }
 
-export async function createTypeFrais({ code, nom, description, fondsIdDefaut }) {
+export async function createTypeFrais({ code, nom, description, fondsIdDefaut, montantDefaut, dateLimitePaiement }) {
   const { data, error } = await supabase
     .from("type_frais")
-    .insert({ code, nom, description: description || null, fonds_id_defaut: fondsIdDefaut })
+    .insert({
+      code, nom, description: description || null, fonds_id_defaut: fondsIdDefaut,
+      montant_defaut: montantDefaut || 0, date_limite_paiement: dateLimitePaiement || null,
+    })
     .select()
     .single();
   if (error) throw error;
@@ -320,5 +323,4 @@ export async function fetchFraisDuParClasse(classeId, typeFraisId, anneeScolaire
     .eq("eleve.classe_id", classeId);
   if (error) throw error;
   return data;
-             }
-        
+}
