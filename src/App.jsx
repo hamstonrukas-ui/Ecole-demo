@@ -1,4 +1,4 @@
-  import React, { useState } from "react";
+import React, { useState } from "react";
 import RoleSelect from "./features/auth/RoleSelect";
 import LoginForm from "./features/auth/LoginForm";
 import PublicHome from "./features/public/PublicHome";
@@ -12,6 +12,7 @@ import RespFinancierHome from "./features/dashboards/RespFinancierHome";
 import ComptableHome from "./features/dashboards/ComptableHome";
 import FinanceHub from "./features/finance/FinanceHub";
 import GestionFraisFonds from "./features/finance/GestionFraisFonds";
+import AssignerFrais from "./features/finance/AssignerFrais";
 import MagasinierHome from "./features/dashboards/MagasinierHome";
 import UserManagement from "./features/admin/UserManagement";
 import ClassesList from "./features/enseignement/ClassesList";
@@ -178,13 +179,15 @@ export default function App() {
           onOpenFinances={() => setScreen("finances")}
           onOpenComptabilite={() => setScreen("comptabilite")}
           onOpenFraisFonds={() => setScreen("fraisfonds")}
+          onOpenAssignerFrais={() => setScreen("assignerfrais")}
         />
       );
     case "fraisfonds":
       return <GestionFraisFonds role={roleCode?.toLowerCase()} onLogout={logout} onBack={() => setScreen("finance")} />;
+    case "assignerfrais":
+      return <AssignerFrais role={roleCode?.toLowerCase()} onLogout={logout} onBack={() => setScreen("finance")} />;
     default:
       return null;
   }
 }
-
-      
+  
