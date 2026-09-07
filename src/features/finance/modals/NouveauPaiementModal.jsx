@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { X, Search, Loader2 } from "lucide-react";
 import { searchEleves } from "../../../lib/api/classes";
-import { fetchSituationParEleve } from "../../../lib/api/finance";
-import { createPaiement } from "../../../lib/api/finance";
+import { fetchSituationParEleve, fetchTypesFrais, createPaiement } from "../../../lib/api/finance";
 
 const MODES = [
   { value: "especes", label: "Espèces" },
@@ -14,7 +13,7 @@ export default function NouveauPaiementModal({ tresorerieId, caissierId, onClose
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [eleve, setEleve] = useState(null);
-  const [situation, setSituation] = useState([]);
+  const [lignes, setLignes] = useState([]); // liste fusionnée : dettes existantes + tous les types de frais
   const [ventilation, setVentilation] = useState({}); // { type_frais_id: montant }
   const [mode, setMode] = useState("especes");
   const [saving, setSaving] = useState(false);
@@ -33,8 +32,23 @@ export default function NouveauPaiementModal({ tresorerieId, caissierId, onClose
     setResults([]);
     setQuery("");
     try {
-      const sit = await fetchSituationParEleve(e.id);
-      setSituation(sit.filter((s) => Number(s.reste_a_payer) > 0));
+      const [situation, tousTypes] = await Promise.all([fetchSituationParEleve(e.id), fetchTypesFrais()]);
+      // On fusionne : chaque type de frais existant est affiché, même sans
+      // dette pré-enregistrée — avec son montant par défaut en suggestion,
+      // pour que le caissier ne soit jamais bloqué faute d'attribution faite
+      // au préalable par le Directeur/Secrétariat.
+      const merged = tousTypes.map((t) => {
+        const sit = situation.find((s) => s.type_frais_id === t.id);
+        return {
+          type_frais_id: t.id,
+          nom: t.nom,
+          fondsId: t.fonds_id_defaut,
+          resteDu: sit ? Number(sit.reste_a_payer) : null,
+          montantDefaut: Number(t.montant_defaut || 0),
+          dateLimite: t.date_limite_paiement,
+        };
+      }).filter((l) => l.resteDu === null || l.resteDu > 0);
+      setLignes(merged);
       setVentilation({});
     } catch (err) {
       setError(err.message);
@@ -47,9 +61,9 @@ export default function NouveauPaiementModal({ tresorerieId, caissierId, onClose
     if (!eleve || total <= 0) return;
     setSaving(true);
     try {
-      const rows = situation
-        .filter((s) => Number(ventilation[s.type_frais_id]) > 0)
-        .map((s) => ({ typeFraisId: s.type_frais_id, fondsId: s.type_frais.fonds_id_defaut, montant: Number(ventilation[s.type_frais_id]) }));
+      const rows = lignes
+        .filter((l) => Number(ventilation[l.type_frais_id]) > 0)
+        .map((l) => ({ typeFraisId: l.type_frais_id, fondsId: l.fondsId, montant: Number(ventilation[l.type_frais_id]) }));
       await createPaiement({ eleveId: eleve.id, tresorerieId, caissierId, modePaiement: mode, ventilation: rows });
       onSuccess?.();
       onClose();
@@ -98,21 +112,28 @@ export default function NouveauPaiementModal({ tresorerieId, caissierId, onClose
               <button onClick={() => setEleve(null)} className="text-xs font-bold text-sky-600 hover:underline">Changer</button>
             </div>
 
-            {situation.length === 0 ? (
-              <div className="text-sm text-slate-400 mb-4">Aucun solde restant dû pour cet élève.</div>
+            {lignes.length === 0 ? (
+              <div className="text-sm text-slate-400 mb-4">Aucun type de frais configuré pour l'instant — demande au Directeur d'en créer un.</div>
             ) : (
               <div className="border border-slate-200 rounded-xl overflow-hidden mb-4">
-                {situation.map((s) => (
-                  <div key={s.type_frais_id} className="flex items-center justify-between px-4 py-2.5 border-b border-slate-100 last:border-0">
+                {lignes.map((l) => (
+                  <div key={l.type_frais_id} className="flex items-center justify-between px-4 py-2.5 border-b border-slate-100 last:border-0">
                     <div>
-                      <div className="text-sm text-slate-700">{s.type_frais.nom}</div>
-                      <div className="text-xs text-slate-400">Reste dû : {Number(s.reste_a_payer).toLocaleString("fr-FR")} FC</div>
+                      <div className="text-sm text-slate-700">{l.nom}</div>
+                      {l.resteDu !== null ? (
+                        <div className="text-xs text-slate-400">Reste dû : {l.resteDu.toLocaleString("fr-FR")} FC</div>
+                      ) : (
+                        <div className="text-xs text-slate-400">
+                          Pas de dette enregistrée{l.montantDefaut > 0 && ` — suggestion : ${l.montantDefaut.toLocaleString("fr-FR")} FC`}
+                          {l.dateLimite && ` (avant le ${new Date(l.dateLimite).toLocaleDateString("fr-FR")})`}
+                        </div>
+                      )}
                     </div>
                     <input
-                      type="number" min={0} max={Number(s.reste_a_payer)}
-                      value={ventilation[s.type_frais_id] || ""}
-                      onChange={(e) => setVentilation((v) => ({ ...v, [s.type_frais_id]: e.target.value }))}
-                      placeholder="0"
+                      type="number" min={0} max={l.resteDu !== null ? l.resteDu : undefined}
+                      value={ventilation[l.type_frais_id] ?? (l.resteDu === null && l.montantDefaut > 0 ? "" : "")}
+                      onChange={(e) => setVentilation((v) => ({ ...v, [l.type_frais_id]: e.target.value }))}
+                      placeholder={l.resteDu === null && l.montantDefaut > 0 ? String(l.montantDefaut) : "0"}
                       className="w-24 border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-sky-400"
                     />
                   </div>
@@ -138,4 +159,5 @@ export default function NouveauPaiementModal({ tresorerieId, caissierId, onClose
       </div>
     </div>
   );
-}
+      }
+                        
