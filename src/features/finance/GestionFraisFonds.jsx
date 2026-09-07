@@ -24,6 +24,8 @@ export default function GestionFraisFonds({ role, onLogout, onBack }) {
   const [tfCode, setTfCode] = useState("");
   const [tfNom, setTfNom] = useState("");
   const [tfFondsId, setTfFondsId] = useState("");
+  const [tfMontant, setTfMontant] = useState("");
+  const [tfDateLimite, setTfDateLimite] = useState("");
 
   function reload() {
     setLoading(true);
@@ -48,8 +50,12 @@ export default function GestionFraisFonds({ role, onLogout, onBack }) {
     if (!tfCode.trim() || !tfNom.trim() || !tfFondsId) return;
     setSaving(true);
     try {
-      await createTypeFrais({ code: tfCode.trim(), nom: tfNom.trim(), fondsIdDefaut: tfFondsId });
-      setTfCode(""); setTfNom(""); setShowTypeFrais(false);
+      await createTypeFrais({
+        code: tfCode.trim(), nom: tfNom.trim(), fondsIdDefaut: tfFondsId,
+        montantDefaut: tfMontant ? Number(tfMontant) : 0,
+        dateLimitePaiement: tfDateLimite || null,
+      });
+      setTfCode(""); setTfNom(""); setTfMontant(""); setTfDateLimite(""); setShowTypeFrais(false);
       reload();
     } catch (e) { setError(e.message); } finally { setSaving(false); }
   }
@@ -88,7 +94,13 @@ export default function GestionFraisFonds({ role, onLogout, onBack }) {
                 <div className="space-y-2">
                   {typesFrais.length === 0 && <p className="text-sm text-slate-400">Aucun type de frais créé pour l'instant.</p>}
                   {typesFrais.map((t) => (
-                    <div key={t.id} className="text-sm border-b border-slate-50 last:border-0 py-2 text-slate-700">{t.nom}</div>
+                    <div key={t.id} className="flex items-center justify-between text-sm border-b border-slate-50 last:border-0 py-2">
+                      <span className="text-slate-700">{t.nom}</span>
+                      <span className="text-xs text-slate-400">
+                        {Number(t.montant_defaut || 0).toLocaleString("fr-FR")} FC
+                        {t.date_limite_paiement && ` · avant le ${new Date(t.date_limite_paiement).toLocaleDateString("fr-FR")}`}
+                      </span>
+                    </div>
                   ))}
                 </div>
               )}
@@ -129,9 +141,20 @@ export default function GestionFraisFonds({ role, onLogout, onBack }) {
             <label className="block text-xs font-bold text-slate-500 mb-1.5">Nom</label>
             <input value={tfNom} onChange={(e) => setTfNom(e.target.value)} placeholder="ex: Minerval" className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm mb-4" />
             <label className="block text-xs font-bold text-slate-500 mb-1.5">Fonds de rattachement</label>
-            <select value={tfFondsId} onChange={(e) => setTfFondsId(e.target.value)} className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm mb-5">
+            <select value={tfFondsId} onChange={(e) => setTfFondsId(e.target.value)} className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm mb-4">
               {fonds.map((f) => <option key={f.id} value={f.id}>{f.nom}</option>)}
             </select>
+            <div className="grid grid-cols-2 gap-3 mb-5">
+              <div>
+                <label className="block text-xs font-bold text-slate-500 mb-1.5">Montant (FC)</label>
+                <input type="number" min={0} value={tfMontant} onChange={(e) => setTfMontant(e.target.value)} placeholder="ex: 150000" className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm" />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-500 mb-1.5">Date limite</label>
+                <input type="date" value={tfDateLimite} onChange={(e) => setTfDateLimite(e.target.value)} className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm" />
+              </div>
+            </div>
+            <p className="text-[11px] text-slate-400 mb-4 -mt-3">Ce montant sert de référence en caisse ; chaque classe/élève peut ensuite être ajusté depuis "Attribuer les frais".</p>
             <button disabled={saving} onClick={submitTypeFrais} className="w-full bg-sky-500 hover:bg-sky-600 text-white font-bold py-2.5 rounded-xl disabled:opacity-60">
               {saving ? "Création…" : "Créer le type de frais"}
             </button>
@@ -140,5 +163,5 @@ export default function GestionFraisFonds({ role, onLogout, onBack }) {
       )}
     </div>
   );
-    }
-              
+                           }
+        
